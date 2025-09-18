@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/styles.css">
+  <title>Список туров</title>
+</head>
+<body>
+  <h1>Список туров</h1>
+  <div class="buttons">
+    <button onclick="window.location.href='/add-tour'">Добавить тур</button>
+    <button onclick="window.location.href='/add-city'">Добавить город</button>
+    <button onclick="window.location.href='/add-hotel'">Добавить отель</button>
+    <button onclick="window.location.href='/add-client'">Добавить клиента</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Название</th>
+        <th>Описание</th>
+        <th>Цена</th>
+        <th>Длительность (дней)</th>
+        <th>Город</th>
+        <th>Отель</th>
+        <th>Клиент</th>
+        <th colspan="2">Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% tours.forEach(tour => { %>
+        <tr>
+          <td><%= tour.name %></td>
+          <td><%= tour.description || 'Нет описания' %></td>
+          <td><%= tour.price.toFixed(2) %></td>
+          <td><%= tour.duration %></td>
+          <td><%= tour.City.name %></td>
+          <td><%= tour.Hotel.name %></td>
+          <td><%= tour.Client ? tour.Client.name : 'Не указан' %></td>
+          <td>
+            <form action="/delete-tour/<%= tour.id %>" method="POST" style="display:inline; border: none;">
+              <button type="submit">Удалить</button>
+            </form>
+          </td>
+          <td><button onclick="window.location.href='/edit-tour/<%= tour.id %>'">Изменить</button></td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</body>
+</html>
