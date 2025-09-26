@@ -1,6 +1,9 @@
 const express = require('express');
 const { Sequelize, DataTypes } = require('sequelize');
 const path = require('path');
+const { waitForDebugger } = require('inspector');
+const bcrypt = require('bcrypt');
+const session = require('express-session');
 
 const app = express();
 const PORT = 3000;
@@ -37,6 +40,25 @@ const Client = sequelize.define('Client', {
   phone: { type: DataTypes.STRING },
 });
 
+const User = sequelize.define('User', {
+  username: {type: DataTypes.STRING, allowNull: false, unique: true},
+  password: {type: DataTypes.STRING, allowNull: false, defaultValue: 'client'},
+  role: {type: DataTypes.STRING, allowNull: false, defaultValue: 'client'},
+});
+
+User.beforeCreate(async (user) => {
+  console.log('BeforeCreate hook triggered for user:', user.username);
+  if (user.password) {
+    user.password = await bcrypt.hash(user.password, 10);
+  }
+});
+
+User.beforeUpdate(async (user) => {
+  if (user.changed('password')) {
+    user.password = await bcrypt.hash(user.password, 10);
+  }
+});
+
 Tour.belongsTo(City); 
 Tour.belongsTo(Hotel); 
 City.hasMany(Tour);    
@@ -46,12 +68,26 @@ Tour.belongsTo(Client);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
+app.use(session({
+  secret: 'SinkSpace',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {secure: false}
+}));
 
 app.get('/', async (req, res) => {
   const tours = await Tour.findAll({
     include: [City, Hotel, Client],
   });
   res.render('index', { tours });
+});
+
+app.get('/register', (req, res) => {
+  res.render('register');
+});
+
+app.get('/login', (req, res) => {
+  res.render('login');
 });
 
 app.get('/add-tour', async (req, res) => {
@@ -92,6 +128,21 @@ app.get('/edit-tour/:id', async (req, res) => {
     console.error('Error fetching tour, cities, hotels, or clients:', error);
     res.status(500).send('Internal Server Error');
   }
+});
+
+app.post('/register', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (username && password) {
+      await User.create({username, password});
+      res.redirect('/');
+    } else {
+      res.status(400).send('Логин и пароль обязательны');
+    }
+  } catch (error) {
+      console.error('Error registering user:', error);
+      res.status(500).send('Internal Server Error');
+    }
 });
 
 app.post('/add-tour', async (req, res) => {
@@ -206,6 +257,11 @@ app.post('/edit-tour/:id', express.urlencoded({ extended: true }), async (req, r
       { name: 'Москва', country: 'Россия' },
       { name: 'Париж', country: 'Франция' },
     ]);
+
+    await User.bulkCreate([
+      {username: 'admin', password: 'adminpass', role: 'admin'},
+      {username: 'client', password: 'clientpass', role: 'client'},
+    ], {individualHooks: true});
 
     await Hotel.bulkCreate([
       { name: 'Отель Москва', stars: 5, address: 'ул. Тверская, 1' },
