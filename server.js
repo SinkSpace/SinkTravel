@@ -4,6 +4,7 @@ const path = require('path');
 const { waitForDebugger } = require('inspector');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const { use } = require('react');
 
 const app = express();
 const PORT = 3000;
@@ -75,11 +76,20 @@ app.use(session({
   cookie: {secure: false}
 }));
 
+const requireRole = (role) => {
+  return (req, res, next) => {
+    if (!req.session.user || req.session.user.role !== role) {
+      return res.status(403).send('Доступ запрещён');
+    }
+    next();
+  };
+};
+
 app.get('/', async (req, res) => {
   const tours = await Tour.findAll({
     include: [City, Hotel, Client],
   });
-  res.render('index', { tours });
+  res.render('index', { tours, user: req.session.user });
 });
 
 app.get('/register', (req, res) => {
@@ -90,7 +100,18 @@ app.get('/login', (req, res) => {
   res.render('login');
 });
 
-app.get('/add-tour', async (req, res) => {
+app.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+      res.status(500).send('Internal Server Error');
+    } else {
+      res.redirect('/login');
+    }
+  });
+});
+
+app.get('/add-tour', requireRole('admin'), async (req, res) => {
   try {
     const cities = await City.findAll();
     const hotels = await Hotel.findAll();
@@ -102,19 +123,19 @@ app.get('/add-tour', async (req, res) => {
   }
 });
 
-app.get('/add-hotel', (req, res) => {
+app.get('/add-hotel', requireRole('admin'), (req, res) => {
   res.render('add-hotel');
 });
 
-app.get('/add-city', (req, res) => {
+app.get('/add-city', requireRole('admin'), (req, res) => {
   res.render('add-city');
 });
 
-app.get('/add-client', (req, res) => {
+app.get('/add-client', requireRole('admin'), (req, res) => {
   res.render('add-client');
 });
 
-app.get('/edit-tour/:id', async (req, res) => {
+app.get('/edit-tour/:id', requireRole('admin'), async (req, res) => {
   try {
     const tourId = req.params.id;
     const tour = await Tour.findByPk(tourId, {
@@ -143,6 +164,22 @@ app.post('/register', async (req, res) => {
       console.error('Error registering user:', error);
       res.status(500).send('Internal Server Error');
     }
+});
+
+app.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ where: { username } });
+    if (user && await bcrypt.compare(password, user.password)) {
+      req.session.user = { id: user.id, role: user.role };
+      res.redirect('/');
+    } else {
+      res.status(400).send('Неверный логин или пароль');
+    }
+  } catch (error) {
+    console.error('Error logging in:', error);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 app.post('/add-tour', async (req, res) => {
@@ -213,7 +250,7 @@ app.post('/add-client', async (req, res) => {
   }
 });
 
-app.post('/delete-tour/:id', async (req, res) => {
+app.post('/delete-tour/:id', requireRole('admin'), async (req, res) => {
   try {
     const tourId = req.params.id;
     await Tour.destroy({

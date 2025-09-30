@@ -8,6 +8,11 @@
 </head>
 <body>
   <h1>Список туров</h1>
+<% if (user) { %>
+  <p>Вы вошли как: <%= user.role %> (<a href="/logout">Выйти</a>)</p>
+<% } else { %>
+  <p>Вы не авторизованы. <a href="/login">Войти</a> или <a href="/register">Зарегистрироваться</a></p>
+<% } %>
   <div class="buttons">
     <button onclick="window.location.href='/add-tour'">Добавить тур</button>
     <button onclick="window.location.href='/add-city'">Добавить город</button>
