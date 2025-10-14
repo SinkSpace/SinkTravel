@@ -91,7 +91,14 @@ app.get('/', async (req, res) => {
   });
   res.render('index', { tours, user: req.session.user });
 });
-
+/*
+app.get('/old', async (req, res) => {
+  const tours = await Tour.findAll({
+    include: [City, Hotel, Client],
+  });
+  res.render('database', { tours, user: req.session.user });
+});
+*/
 app.get('/register', (req, res) => {
   res.render('register');
 });
@@ -106,7 +113,7 @@ app.get('/logout', (req, res) => {
       console.error('Error destroying session:', err);
       res.status(500).send('Internal Server Error');
     } else {
-      res.redirect('/login');
+      res.redirect('/');
     }
   });
 });
@@ -338,3 +345,4 @@ app.post('/edit-tour/:id', express.urlencoded({ extended: true }), async (req, r
     console.error('Error initializing database:', error);
   }
 })();
+

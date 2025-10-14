@@ -3,54 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SinkTravel</title>
   <link rel="stylesheet" href="/styles.css">
-  <title>Список туров</title>
 </head>
 <body>
-  <h1>Список туров</h1>
-<% if (user) { %>
-  <p>Вы вошли как: <%= user.role %> (<a href="/logout">Выйти</a>)</p>
-<% } else { %>
-  <p>Вы не авторизованы. <a href="/login">Войти</a> или <a href="/register">Зарегистрироваться</a></p>
-<% } %>
-  <div class="buttons">
-    <button onclick="window.location.href='/add-tour'">Добавить тур</button>
-    <button onclick="window.location.href='/add-city'">Добавить город</button>
-    <button onclick="window.location.href='/add-hotel'">Добавить отель</button>
-    <button onclick="window.location.href='/add-client'">Добавить клиента</button>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>Название</th>
-        <th>Описание</th>
-        <th>Цена</th>
-        <th>Длительность (дней)</th>
-        <th>Город</th>
-        <th>Отель</th>
-        <th>Клиент</th>
-        <th colspan="2">Действия</th>
-      </tr>
-    </thead>
-    <tbody>
+  <nav>
+    <h1>SinkTravel</h1>
+    <% if (user) { %>
+      <p>Здравствуйте, <%= user.username %>! <button onclick="window.location.href='/logout'">Выйти</button></p>
+    <% } else { %>
+      <p><button onclick="window.location.href='/login'">Войти</button></p>
+    <% } %>
+  </nav>
+
+  <div class="tours-container">
+    <% if (tours && tours.length > 0) { %>
       <% tours.forEach(tour => { %>
-        <tr>
-          <td><%= tour.name %></td>
-          <td><%= tour.description || 'Нет описания' %></td>
-          <td><%= tour.price.toFixed(2) %></td>
-          <td><%= tour.duration %></td>
-          <td><%= tour.City.name %></td>
-          <td><%= tour.Hotel.name %></td>
-          <td><%= tour.Client ? tour.Client.name : 'Не указан' %></td>
-          <td>
-            <form action="/delete-tour/<%= tour.id %>" method="POST" style="display:inline; border: none;">
-              <button type="submit">Удалить</button>
-            </form>
-          </td>
-          <td><button onclick="window.location.href='/edit-tour/<%= tour.id %>'">Изменить</button></td>
-        </tr>
+        <div class="tour-card">
+          <h2><%= tour.name %></h2>
+          <p class="tour-description"><%= tour.description || 'Нет описания' %></p>
+          <p><strong>Длительность:</strong> <%= tour.duration %> суток</p>
+          <p><strong>Место:</strong> <%= tour.City.name %>, <%= tour.Hotel.name %></p>
+          
+          <div class="tour-meta">
+            <div class="tour-price"><%= tour.price.toFixed(2) %>₽</div>
+            <div class="tour-client">Забронировано: <%= tour.Client ? tour.Client.name : 'Не указан' %></div>
+          </div>
+          
+          <% if (user && user.role === 'admin') { %>
+            <div class="admin-actions">
+              <form action="/delete-tour/<%= tour.id %>" method="POST" style="display:inline;">
+                <button type="submit" class="delete-btn">Удалить</button>
+              </form>
+              <button onclick="window.location.href='/edit-tour/<%= tour.id %>'" class="edit-btn">Изменить</button>
+            </div>
+          <% } %>
+        </div>
       <% }); %>
-    </tbody>
-  </table>
+    <% } else { %>
+      <div class="no-tours">
+        <p>Пока нет доступных туров</p>
+      </div>
+    <% } %>
+  </div>
+
+  <% if (user && user.role === 'admin') { %>
+    <div class="buttons">
+      <button onclick="window.location.href='/add-tour'">Добавить тур</button>
+      <button onclick="window.location.href='/add-city'">Добавить город</button>
+      <button onclick="window.location.href='/add-hotel'">Добавить отель</button>
+      <button onclick="window.location.href='/add-client'">Добавить клиента</button>
+    </div> 
+  <% } %>
 </body>
 </html>
