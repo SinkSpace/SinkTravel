@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; text-align: center; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 15px; text-decoration: none; color: #007bff; }
+        .error-message { color: #dc3545; font-size: 1.2em; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/">Главная</a>
+        <% if (user) { %>
+            <a href="/catalog">Каталог</a>
+            <a href="/cart">Корзина</a>
+            <a href="/profile">Профиль</a>
+            <a href="/logout">Выйти</a>
+        <% } else { %>
+            <a href="/login">Войти</a>
+            <a href="/register">Регистрация</a>
+        <% } %>
+    </div>
+
+    <h1>Ошибка</h1>
+    <div class="error-message"><%= message %></div>
+    <a href="/" class="btn">Вернуться на главную</a>
+</body>
+</html>

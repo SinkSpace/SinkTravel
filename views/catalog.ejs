@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .tour { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .btn { padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 15px; text-decoration: none; color: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/">Главная</a>
+        <a href="/catalog">Каталог</a>
+        <% if (user) { %>
+            <a href="/cart">Корзина</a>
+            <a href="/profile">Профиль</a>
+            <a href="/logout">Выйти</a>
+        <% } else { %>
+            <a href="/login">Войти</a>
+            <a href="/register">Регистрация</a>
+        <% } %>
+    </div>
+
+    <h1>Каталог туров</h1>
+    
+    <% if (tours && tours.length > 0) { %>
+        <% tours.forEach(tour => { %>
+            <div class="tour">
+                <h3><%= tour.name %></h3>
+                <p><strong>Описание:</strong> <%= tour.description %></p>
+                <p><strong>Цена:</strong> <%= tour.price %> руб.</p>
+                <p><strong>Длительность:</strong> <%= tour.duration %> дней</p>
+                <p><strong>Город:</strong> <%= tour.City.name %>, <%= tour.City.country %></p>
+                <p><strong>Отель:</strong> <%= tour.Hotel.name %> (<%= tour.Hotel.stars %>★)</p>
+                
+                <% if (user) { %>
+                    <button class="btn" onclick="addToCart( tour.id )">Добавить в корзину</button>
+                <% } else { %>
+                    <p><a href="/login">Войдите</a>, чтобы добавить в корзину</p>
+                <% } %>
+            </div>
+        <% }); %>
+    <% } else { %>
+        <p>Туры не найдены</p>
+    <% } %>
+
+    <script>
+        async function addToCart(tourId) {
+            try {
+                const response = await fetch(`/cart/add/${tourId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Тур добавлен в корзину!');
+                } else {
+                    alert('Ошибка: ' + result.message);
+                }
+            } catch (error) {
+                alert('Ошибка при добавлении в корзину');
+            }
+        }
+    </script>
+</body>
+</html>

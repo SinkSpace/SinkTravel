@@ -47,6 +47,27 @@ const User = sequelize.define('User', {
   role: {type: DataTypes.STRING, allowNull: false, defaultValue: 'client'},
 });
 
+// Добавляем модель для корзины
+const Cart = sequelize.define('Cart', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  }
+});
+
+const CartItem = sequelize.define('CartItem', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  quantity: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1
+  }
+});
+
 User.beforeCreate(async (user) => {
   console.log('BeforeCreate hook triggered for user:', user.username);
   if (user.password) {
@@ -60,6 +81,7 @@ User.beforeUpdate(async (user) => {
   }
 });
 
+// Определяем связи между моделями
 Tour.belongsTo(City); 
 Tour.belongsTo(Hotel); 
 City.hasMany(Tour);    
@@ -67,14 +89,27 @@ Hotel.hasMany(Tour);
 Client.hasMany(Tour);  
 Tour.belongsTo(Client);
 
+// Связи для корзины
+User.hasOne(Cart);
+Cart.belongsTo(User);
+Cart.belongsToMany(Tour, { through: CartItem });
+Tour.belongsToMany(Cart, { through: CartItem });
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(session({
   secret: 'SinkSpace',
   resave: false,
   saveUninitialized: true,
   cookie: {secure: false}
 }));
+
+// Middleware для передачи данных пользователя во все шаблоны
+app.use((req, res, next) => {
+  res.locals.user = req.session.user;
+  next();
+});
 
 const requireRole = (role) => {
   return (req, res, next) => {
@@ -85,26 +120,199 @@ const requireRole = (role) => {
   };
 };
 
+const requireAuth = (req, res, next) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  next();
+};
+
+// Главная страница
 app.get('/', async (req, res) => {
-  const tours = await Tour.findAll({
-    include: [City, Hotel, Client],
-  });
-  res.render('index', { tours, user: req.session.user });
+  try {
+    const tours = await Tour.findAll({
+      include: [City, Hotel, Client],
+      limit: 6 // Показываем только 6 туров на главной
+    });
+    res.render('index', { 
+      tours, 
+      user: req.session.user,
+      title: 'Главная - Туристическое агентство'
+    });
+  } catch (error) {
+    console.error('Error fetching tours:', error);
+    res.status(500).render('error', { 
+      message: 'Ошибка загрузки туров',
+      title: 'Ошибка'
+    });
+  }
 });
-/*
-app.get('/old', async (req, res) => {
-  const tours = await Tour.findAll({
-    include: [City, Hotel, Client],
-  });
-  res.render('database', { tours, user: req.session.user });
+
+// Страница каталога
+app.get('/catalog', async (req, res) => {
+  try {
+    const tours = await Tour.findAll({
+      include: [City, Hotel, Client],
+    });
+    res.render('catalog', { 
+      tours, 
+      user: req.session.user,
+      title: 'Каталог туров'
+    });
+  } catch (error) {
+    console.error('Error fetching tours for catalog:', error);
+    res.status(500).render('error', { 
+      message: 'Ошибка загрузки каталога',
+      title: 'Ошибка'
+    });
+  }
 });
-*/
+
+// Страница корзины
+app.get('/cart', requireAuth, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({
+      where: { UserId: req.session.user.id },
+      include: {
+        model: Tour,
+        through: { attributes: ['quantity'] },
+        include: [City, Hotel]
+      }
+    });
+
+    let total = 0;
+    let items = [];
+    
+    if (cart && cart.Tours) {
+      items = cart.Tours;
+      total = items.reduce((sum, tour) => sum + (tour.price * tour.CartItem.quantity), 0);
+    }
+
+    res.render('cart', {
+      items,
+      total,
+      user: req.session.user,
+      title: 'Корзина'
+    });
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    res.status(500).render('error', { 
+      message: 'Ошибка загрузки корзины',
+      title: 'Ошибка'
+    });
+  }
+});
+
+// Добавление тура в корзину
+app.post('/cart/add/:tourId', requireAuth, async (req, res) => {
+  try {
+    const { tourId } = req.params;
+    const userId = req.session.user.id;
+
+    let cart = await Cart.findOne({ where: { UserId: userId } });
+    
+    if (!cart) {
+      cart = await Cart.create({ UserId: userId });
+    }
+
+    const cartItem = await CartItem.findOne({
+      where: { CartId: cart.id, TourId: tourId }
+    });
+
+    if (cartItem) {
+      await cartItem.update({ quantity: cartItem.quantity + 1 });
+    } else {
+      await CartItem.create({ CartId: cart.id, TourId: tourId });
+    }
+
+    res.json({ success: true, message: 'Тур добавлен в корзину' });
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    res.status(500).json({ success: false, message: 'Ошибка добавления в корзину' });
+  }
+});
+
+// Удаление тура из корзины
+app.post('/cart/remove/:itemId', requireAuth, async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    await CartItem.destroy({ where: { id: itemId } });
+    res.json({ success: true, message: 'Тур удален из корзины' });
+  } catch (error) {
+    console.error('Error removing from cart:', error);
+    res.status(500).json({ success: false, message: 'Ошибка удаления из корзины' });
+  }
+});
+
+// Страница профиля
+app.get('/profile', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.session.user.id, {
+      attributes: { exclude: ['password'] }
+    });
+    
+    const userTours = await Tour.findAll({
+      where: { ClientId: req.session.user.id },
+      include: [City, Hotel]
+    });
+
+    res.render('profile', {
+      user,
+      tours: userTours,
+      title: 'Мой профиль'
+    });
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).render('error', { 
+      message: 'Ошибка загрузки профиля',
+      title: 'Ошибка'
+    });
+  }
+});
+
+// Обновление профиля
+app.post('/profile/update', requireAuth, async (req, res) => {
+  try {
+    const { username, currentPassword, newPassword } = req.body;
+    const user = await User.findByPk(req.session.user.id);
+
+    let updateData = { username };
+
+    if (newPassword) {
+      if (!currentPassword || !(await bcrypt.compare(currentPassword, user.password))) {
+        return res.status(400).render('profile', {
+          user,
+          error: 'Неверный текущий пароль',
+          title: 'Мой профиль'
+        });
+      }
+      updateData.password = newPassword;
+    }
+
+    await user.update(updateData);
+    res.redirect('/profile');
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).render('error', { 
+      message: 'Ошибка обновления профиля',
+      title: 'Ошибка'
+    });
+  }
+});
+
+// Существующие маршруты авторизации (обновленные)
 app.get('/register', (req, res) => {
-  res.render('register');
+  if (req.session.user) {
+    return res.redirect('/');
+  }
+  res.render('register', { title: 'Регистрация' });
 });
 
 app.get('/login', (req, res) => {
-  res.render('login');
+  if (req.session.user) {
+    return res.redirect('/');
+  }
+  res.render('login', { title: 'Вход в систему' });
 });
 
 app.get('/logout', (req, res) => {
@@ -118,28 +326,32 @@ app.get('/logout', (req, res) => {
   });
 });
 
+// Существующие маршруты администратора (остаются без изменений)
 app.get('/add-tour', requireRole('admin'), async (req, res) => {
   try {
     const cities = await City.findAll();
     const hotels = await Hotel.findAll();
     const clients = await Client.findAll();
-    res.render('add-tour', { cities, hotels, clients });
+    res.render('add-tour', { cities, hotels, clients, title: 'Добавить тур' });
   } catch (error) {
     console.error('Error fetching cities, hotels, or clients:', error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).render('error', { 
+      message: 'Ошибка загрузки формы',
+      title: 'Ошибка'
+    });
   }
 });
 
 app.get('/add-hotel', requireRole('admin'), (req, res) => {
-  res.render('add-hotel');
+  res.render('add-hotel', { title: 'Добавить отель' });
 });
 
 app.get('/add-city', requireRole('admin'), (req, res) => {
-  res.render('add-city');
+  res.render('add-city', { title: 'Добавить город' });
 });
 
 app.get('/add-client', requireRole('admin'), (req, res) => {
-  res.render('add-client');
+  res.render('add-client', { title: 'Добавить клиента' });
 });
 
 app.get('/edit-tour/:id', requireRole('admin'), async (req, res) => {
@@ -151,25 +363,35 @@ app.get('/edit-tour/:id', requireRole('admin'), async (req, res) => {
     const cities = await City.findAll();
     const hotels = await Hotel.findAll();
     const clients = await Client.findAll();
-    res.render('edit-tour', { tour, cities, hotels, clients });
+    res.render('edit-tour', { tour, cities, hotels, clients, title: 'Редактировать тур' });
   } catch (error) {
     console.error('Error fetching tour, cities, hotels, or clients:', error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).render('error', { 
+      message: 'Ошибка загрузки формы',
+      title: 'Ошибка'
+    });
   }
 });
 
+// Обработчики форм (остаются без изменений)
 app.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
     if (username && password) {
       await User.create({username, password});
-      res.redirect('/');
+      res.redirect('/login');
     } else {
-      res.status(400).send('Логин и пароль обязательны');
+      res.status(400).render('register', { 
+        error: 'Логин и пароль обязательны',
+        title: 'Регистрация'
+      });
     }
   } catch (error) {
       console.error('Error registering user:', error);
-      res.status(500).send('Internal Server Error');
+      res.status(500).render('error', { 
+        message: 'Ошибка регистрации',
+        title: 'Ошибка'
+      });
     }
 });
 
@@ -178,17 +400,24 @@ app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const user = await User.findOne({ where: { username } });
     if (user && await bcrypt.compare(password, user.password)) {
-      req.session.user = { id: user.id, role: user.role };
+      req.session.user = { id: user.id, username: user.username, role: user.role };
       res.redirect('/');
     } else {
-      res.status(400).send('Неверный логин или пароль');
+      res.status(400).render('login', { 
+        error: 'Неверный логин или пароль',
+        title: 'Вход в систему'
+      });
     }
   } catch (error) {
     console.error('Error logging in:', error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).render('error', { 
+      message: 'Ошибка входа',
+      title: 'Ошибка'
+    });
   }
 });
 
+// Существующие POST-маршруты (остаются без изменений)
 app.post('/add-tour', async (req, res) => {
   try {
     const { name, description, price, duration, cityId, hotelId, clientId } = req.body;
@@ -293,6 +522,15 @@ app.post('/edit-tour/:id', express.urlencoded({ extended: true }), async (req, r
   }
 });
 
+// Обработчик 404 ошибки
+app.use((req, res) => {
+  res.status(404).render('404', { 
+    title: 'Страница не найдена',
+    user: req.session.user
+  });
+});
+
+// Инициализация базы данных и запуск сервера
 (async () => {
   try {
     await sequelize.sync({ force: true }); 
@@ -345,4 +583,3 @@ app.post('/edit-tour/:id', express.urlencoded({ extended: true }), async (req, r
     console.error('Error initializing database:', error);
   }
 })();
-

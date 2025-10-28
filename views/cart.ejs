@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .cart-item { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .btn { padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 15px; text-decoration: none; color: #007bff; }
+        .total { font-size: 1.2em; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/">Главная</a>
+        <a href="/catalog">Каталог</a>
+        <a href="/cart">Корзина</a>
+        <a href="/profile">Профиль</a>
+        <a href="/logout">Выйти</a>
+    </div>
+
+    <h1>Корзина</h1>
+    
+    <% if (items && items.length > 0) { %>
+        <% items.forEach(item => { %>
+            <div class="cart-item">
+                <h3><%= item.name %></h3>
+                <p><strong>Описание:</strong> <%= item.description %></p>
+                <p><strong>Цена:</strong> <%= item.price %> руб.</p>
+                <p><strong>Количество:</strong> <%= item.CartItem.quantity %></p>
+                <p><strong>Итого:</strong> <%= item.price * item.CartItem.quantity %> руб.</p>
+                <p><strong>Город:</strong> <%= item.City.name %>, <%= item.City.country %></p>
+                <p><strong>Отель:</strong> <%= item.Hotel.name %> (<%= item.Hotel.stars %>★)</p>
+                
+                <button class="btn btn-danger" onclick="removeFromCart( item.CartItem.id )">Удалить из корзины</button>
+            </div>
+        <% }); %>
+        
+        <div class="total">
+            Общая сумма: <%= total %> руб.
+        </div>
+        
+        <button class="btn" style="background: #28a745;">Оформить заказ</button>
+    <% } else { %>
+        <p>Корзина пуста</p>
+        <a href="/catalog" class="btn">Перейти в каталог</a>
+    <% } %>
+
+    <script>
+        async function removeFromCart(itemId) {
+            if (confirm('Удалить тур из корзины?')) {
+                try {
+                    const response = await fetch(`/cart/remove/${itemId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('Тур удален из корзины!');
+                        location.reload();
+                    } else {
+                        alert('Ошибка: ' + result.message);
+                    }
+                } catch (error) {
+                    alert('Ошибка при удалении из корзины');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

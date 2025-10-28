@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .nav { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .nav a { margin-right: 15px; text-decoration: none; color: #007bff; }
+        .nav a:hover { text-decoration: underline; }
+        .user-info { float: right; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/">Главная</a>
+        <a href="/catalog">Каталог</a>
+        <% if (user) { %>
+            <a href="/cart">Корзина</a>
+            <a href="/profile">Профиль</a>
+            <span class="user-info">Привет, <%= user.username %>!</span>
+            <a href="/logout">Выйти</a>
+        <% } else { %>
+            <a href="/login">Войти</a>
+            <a href="/register">Регистрация</a>
+        <% } %>
+    </div>
