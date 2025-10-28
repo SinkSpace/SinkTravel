@@ -17,7 +17,9 @@
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "mssql": "^11.0.1",
+    "multer": "^2.0.2",
     "nodemon": "^3.1.10",
+    "path": "^0.12.7",
     "react": "^19.1.1",
     "sequelize": "^6.37.7",
     "sqlite3": "^5.1.7"

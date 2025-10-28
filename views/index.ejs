@@ -22,6 +22,11 @@
         <div class="tour-card">
           <h2><%= tour.name %></h2>
           <p class="tour-description"><%= tour.description || 'Нет описания' %></p>
+          <% if (tour.image) { %>
+            <img src="<%= tour.image %>" alt="<%= tour.name %>" class="tour-image">
+          <% } else { %>
+            <div class="tour-image-placeholder">Нет изображения</div>
+          <% } %>
           <p><strong>Длительность:</strong> <%= tour.duration %> суток</p>
           <p><strong>Место:</strong> <%= tour.City.name %>, <%= tour.Hotel.name %></p>
           
@@ -29,7 +34,7 @@
             <div class="tour-price"><%= tour.price.toFixed(2) %>₽</div>
             <div class="tour-client">Забронировано: <%= tour.Client ? tour.Client.name : 'Не указан' %></div>
           </div>
-          
+        
           <% if (user && user.role === 'admin') { %>
             <div class="admin-actions">
               <form action="/delete-tour/<%= tour.id %>" method="POST" style="display:inline;">

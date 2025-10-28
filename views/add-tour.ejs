@@ -4,46 +4,134 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/styles.css">
-  <title>Добавить тур</title>
+<title>Добавить тур</title>
+<style>
+  .form-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+  }
+  .form-container h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    color: #1e293b;
+  }
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 1rem;
+  }
+  .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+  }
+  .form-container button {
+    width: 100%;
+    padding: 14px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .form-container button:hover {
+    transform: translateY(-2px);
+    background: #1d4ed8;
+  }
+  .file-label {
+    display: block;
+    margin-top: 0.5rem;
+    font-weight: normal;
+    color: #64748b;
+  }
+  @media (max-width: 600px) {
+    .form-container {
+      margin: 1rem;
+      padding: 1.5rem;
+    }
+  }
+</style>
 </head>
 <body>
-  <h1>Добавить тур</h1>
-  <form action="/add-tour" method="POST">
-    <label for="name">Название тура:</label>
-    <input type="text" id="name" name="name" required>
-
-    <label for="description">Описание:</label>
-    <textarea id="description" name="description" rows="4"></textarea>
-
-    <label for="price">Цена:</label>
-    <input type="number" step="0.01" id="price" name="price" required>
-
-    <label for="duration">Длительность (дней):</label>
-    <input type="number" id="duration" name="duration" required>
-
-    <label for="city">Выберите город:</label>
-    <select id="city" name="cityId" required>
-      <% cities.forEach(city => { %>
-        <option value="<%= city.id %>"><%= city.name %>, <%= city.country %></option>
-      <% }); %>
-    </select>
-
-    <label for="hotel">Выберите отель:</label>
-    <select id="hotel" name="hotelId" required>
-      <% hotels.forEach(hotel => { %>
-        <option value="<%= hotel.id %>"><%= hotel.name %> (<%= hotel.stars %>★)</option>
-      <% }); %>
-    </select>
-
-    <label for="client">Выберите клиента (необязательно):</label>
-    <select id="client" name="clientId">
-      <option value="">-- Без клиента --</option>
-      <% clients.forEach(client => { %>
-        <option value="<%= client.id %>"><%= client.name %> (<%= client.email %>)</option>
-      <% }); %>
-    </select>
-
-    <button type="submit">Сохранить</button>
-  </form>
+  <div class="form-container">
+    <h1>Добавить тур</h1>
+    <form action="/add-tour" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="name">Название тура:</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div class="form-group">
+        <label for="description">Описание:</label>
+        <textarea id="description" name="description" rows="4"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="price">Цена:</label>
+        <input type="number" step="0.01" id="price" name="price" required>
+      </div>
+      <div class="form-group">
+        <label for="duration">Длительность (дней):</label>
+        <input type="number" id="duration" name="duration" required>
+      </div>
+      <div class="form-group">
+        <label for="city">Выберите город:</label>
+        <select id="city" name="cityId" required>
+          <% cities.forEach(city => { %>
+            <option value="<%= city.id %>"><%= city.name %>, <%= city.country %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="hotel">Выберите отель:</label>
+        <select id="hotel" name="hotelId" required>
+          <% hotels.forEach(hotel => { %>
+            <option value="<%= hotel.id %>"><%= hotel.name %> (<%= hotel.stars %>★)</option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="client">Выберите клиента (необязательно):</label>
+        <select id="client" name="clientId">
+          <option value="">-- Без клиента --</option>
+          <% clients.forEach(client => { %>
+            <option value="<%= client.id %>"><%= client.name %> (<%= client.email %>)</option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="file-label">
+          Изображение тура:
+          <input type="file" name="image" accept="image/*" style="margin-top: 6px;">
+        </label>
+      </div>
+      <button type="submit">Сохранить</button>
+    </form>
+  </div>
+</body>
+</html>
 </body>
 </html>

@@ -5,20 +5,83 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/styles.css">
   <title>Добавить клиента</title>
+    <style>
+    .form-container {
+      max-width: 500px;
+      margin: 2rem auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+    }
+    .form-container h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      color: #1e293b;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-size: 1rem;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+    .form-container button {
+      width: 100%;
+      padding: 14px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .form-container button:hover {
+      transform: translateY(-2px);
+      background: #1d4ed8;
+    }
+    @media (max-width: 600px) {
+      .form-container {
+        margin: 1rem;
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
 </head>
 <body>
-  <h1>Добавить клиента</h1>
-  <form action="/add-client" method="POST">
-    <label for="name">Имя клиента:</label>
-    <input type="text" id="name" name="name" required>
-
-    <label for="email">Email:</label>
-    <input type="email" id="email" name="email" required>
-
-    <label for="phone">Телефон:</label>
-    <input type="text" id="phone" name="phone">
-
-    <button type="submit">Сохранить</button>
-  </form>
+  <div class="form-container">
+    <h1>Добавить клиента</h1>
+    <form action="/add-client" method="POST">
+      <div class="form-group">
+        <label for="name">Имя клиента:</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div class="form-group">
+        <label for="phone">Телефон:</label>
+        <input type="text" id="phone" name="phone">
+      </div>
+      <button type="submit">Сохранить</button>
+    </form>
+  </div>
 </body>
 </html>

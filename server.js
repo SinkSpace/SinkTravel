@@ -5,9 +5,39 @@ const { waitForDebugger } = require('inspector');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const { use } = require('react');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 const PORT = 3000;
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, 'public', 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = file.originalname
+      .replace(ext, '')
+      .replace(/[^a-zA-Z0-9]/g, '_');
+    const filename = `tour_${Date.now()}_${safeName}${ext}`;
+    cb(null, filename);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Только изображения разрешены!'), false);
+  }
+};
+
+const upload = multer({ storage, fileFilter });
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -21,7 +51,8 @@ const Tour = sequelize.define('Tour', {
   name: { type: DataTypes.STRING, allowNull: false },
   description: { type: DataTypes.TEXT },
   price: { type: DataTypes.FLOAT, allowNull: false },
-  duration: { type: DataTypes.INTEGER, allowNull: false }, 
+  duration: { type: DataTypes.INTEGER, allowNull: false },
+  image: { type: DataTypes.STRING, allowNull: true } // путь к файлу изображения
 });
 
 const Hotel = sequelize.define('Hotel', {
@@ -422,22 +453,25 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.post('/add-tour', async (req, res) => {
+app.post('/add-tour', requireRole('admin'), upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, duration, cityId, hotelId, clientId } = req.body;
     if (name && price && duration && cityId && hotelId) {
+      const image = req.file ? `/uploads/${req.file.filename}` : null;
+
       await Tour.create({
         name,
         description,
         price,
         duration,
+        image,
         CityId: cityId,
         HotelId: hotelId,
-        ClientId: clientId || null, 
+        ClientId: clientId || null,
       });
       res.redirect('/');
     } else {
-      res.status(400).send('All required fields must be filled');
+      res.status(400).send('Все обязательные поля должны быть заполнены');
     }
   } catch (error) {
     console.error('Error adding tour:', error);
@@ -503,16 +537,23 @@ app.post('/delete-tour/:id', requireRole('admin'), async (req, res) => {
   }
 });
 
-app.post('/edit-tour/:id', express.urlencoded({ extended: true }), async (req, res) => {
+app.post('/edit-tour/:id', requireRole('admin'), upload.single('image'), async (req, res) => {
   try {
     const tourId = req.params.id;
     const { name, description, price, duration, cityId, hotelId, clientId } = req.body;
+
+    let image = req.body.currentImage; // сохраняем старое изображение по умолчанию
+    if (req.file) {
+      image = `/uploads/${req.file.filename}`;
+    }
+
     await Tour.update(
       {
         name,
         description,
         price,
         duration,
+        image,
         CityId: cityId,
         HotelId: hotelId,
         ClientId: clientId || null,
@@ -535,7 +576,7 @@ app.use((req, res) => {
 
 (async () => {
   try {
-    await sequelize.sync({ force: true }); 
+    await sequelize.sync({ alter: true }); 
 
     await City.bulkCreate([
       { name: 'Москва', country: 'Россия' },
