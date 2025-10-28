@@ -1,21 +1,103 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/styles.css">
     <title>Регистрация</title>
+    <style>
+        /* Специфичные стили для формы регистрации */
+        .register-container {
+            max-width: 500px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .register-container h1 {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .register-container button {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .register-container button:hover {
+            transform: translateY(-2px);
+            background: #1d4ed8;
+        }
+
+        .register-container button:active {
+            transform: translateY(0);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 600px) {
+            .register-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .register-container h1 {
+                font-size: 1.7rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Регистрация нового пользователя</h1>
-    <form action="/register" method="POST">
-        <label for="username">Логин:</label>
-        <input type="text" id="username" name="username" required>
-
-        <label for="password" id="password" name="password">Пароль:</label>
-        <input type="password" id="password" name="password" required>
-
-        <button type="submit">Зарегестрироваться</button>
-    </form>
+    <div class="register-container">
+        <h1>Регистрация нового пользователя</h1>
+        <form action="/register" method="POST">
+            <div class="form-group">
+                <label for="username">Логин:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+    </div>
 </body>
 </html>

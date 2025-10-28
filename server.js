@@ -47,7 +47,6 @@ const User = sequelize.define('User', {
   role: {type: DataTypes.STRING, allowNull: false, defaultValue: 'client'},
 });
 
-// Добавляем модель для корзины
 const Cart = sequelize.define('Cart', {
   id: {
     type: DataTypes.INTEGER,
@@ -81,7 +80,6 @@ User.beforeUpdate(async (user) => {
   }
 });
 
-// Определяем связи между моделями
 Tour.belongsTo(City); 
 Tour.belongsTo(Hotel); 
 City.hasMany(Tour);    
@@ -89,7 +87,6 @@ Hotel.hasMany(Tour);
 Client.hasMany(Tour);  
 Tour.belongsTo(Client);
 
-// Связи для корзины
 User.hasOne(Cart);
 Cart.belongsTo(User);
 Cart.belongsToMany(Tour, { through: CartItem });
@@ -105,7 +102,6 @@ app.use(session({
   cookie: {secure: false}
 }));
 
-// Middleware для передачи данных пользователя во все шаблоны
 app.use((req, res, next) => {
   res.locals.user = req.session.user;
   next();
@@ -127,12 +123,11 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
-// Главная страница
 app.get('/', async (req, res) => {
   try {
     const tours = await Tour.findAll({
       include: [City, Hotel, Client],
-      limit: 6 // Показываем только 6 туров на главной
+      limit: 6
     });
     res.render('index', { 
       tours, 
@@ -148,7 +143,6 @@ app.get('/', async (req, res) => {
   }
 });
 
-// Страница каталога
 app.get('/catalog', async (req, res) => {
   try {
     const tours = await Tour.findAll({
@@ -168,7 +162,6 @@ app.get('/catalog', async (req, res) => {
   }
 });
 
-// Страница корзины
 app.get('/cart', requireAuth, async (req, res) => {
   try {
     const cart = await Cart.findOne({
@@ -203,7 +196,6 @@ app.get('/cart', requireAuth, async (req, res) => {
   }
 });
 
-// Добавление тура в корзину
 app.post('/cart/add/:tourId', requireAuth, async (req, res) => {
   try {
     const { tourId } = req.params;
@@ -232,7 +224,6 @@ app.post('/cart/add/:tourId', requireAuth, async (req, res) => {
   }
 });
 
-// Удаление тура из корзины
 app.post('/cart/remove/:itemId', requireAuth, async (req, res) => {
   try {
     const { itemId } = req.params;
@@ -244,7 +235,6 @@ app.post('/cart/remove/:itemId', requireAuth, async (req, res) => {
   }
 });
 
-// Страница профиля
 app.get('/profile', requireAuth, async (req, res) => {
   try {
     const user = await User.findByPk(req.session.user.id, {
@@ -270,7 +260,6 @@ app.get('/profile', requireAuth, async (req, res) => {
   }
 });
 
-// Обновление профиля
 app.post('/profile/update', requireAuth, async (req, res) => {
   try {
     const { username, currentPassword, newPassword } = req.body;
@@ -300,7 +289,6 @@ app.post('/profile/update', requireAuth, async (req, res) => {
   }
 });
 
-// Существующие маршруты авторизации (обновленные)
 app.get('/register', (req, res) => {
   if (req.session.user) {
     return res.redirect('/');
@@ -326,7 +314,6 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// Существующие маршруты администратора (остаются без изменений)
 app.get('/add-tour', requireRole('admin'), async (req, res) => {
   try {
     const cities = await City.findAll();
@@ -373,7 +360,25 @@ app.get('/edit-tour/:id', requireRole('admin'), async (req, res) => {
   }
 });
 
-// Обработчики форм (остаются без изменений)
+app.get('/database', requireAuth, async (req, res) => {
+  try {
+    const tours = await Tour.findAll({
+      include: [City, Hotel, Client],
+    });
+    res.render('database', { 
+      tours, 
+      user: req.session.user,
+      title: 'База данных туров'
+    });
+  } catch (error) {
+    console.error('Error fetching tours for database view:', error);
+    res.status(500).render('error', { 
+      message: 'Ошибка загрузки базы данных',
+      title: 'Ошибка'
+    });
+  }
+});
+
 app.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -417,7 +422,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Существующие POST-маршруты (остаются без изменений)
 app.post('/add-tour', async (req, res) => {
   try {
     const { name, description, price, duration, cityId, hotelId, clientId } = req.body;
@@ -522,7 +526,6 @@ app.post('/edit-tour/:id', express.urlencoded({ extended: true }), async (req, r
   }
 });
 
-// Обработчик 404 ошибки
 app.use((req, res) => {
   res.status(404).render('404', { 
     title: 'Страница не найдена',
@@ -530,7 +533,6 @@ app.use((req, res) => {
   });
 });
 
-// Инициализация базы данных и запуск сервера
 (async () => {
   try {
     await sequelize.sync({ force: true }); 

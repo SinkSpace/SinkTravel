@@ -1,16 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
     <title>Страница не найдена</title>
+    <style>
+        .not-found-container {
+            max-width: 600px;
+            margin: 4rem auto;
+            text-align: center;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .not-found-container h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ef4444;
+            margin-bottom: 1rem;
+        }
+
+        .not-found-container p {
+            font-size: 1.1rem;
+            color: #475569;
+            margin-bottom: 1.2rem;
+            line-height: 1.6;
+        }
+
+        .not-found-container a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .not-found-container a:hover {
+            text-decoration: underline;
+        }
+
+        .search-form {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .search-form input {
+            padding: 10px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .search-form button {
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .search-form button:hover {
+            transform: translateY(-2px);
+            background: #1d4ed8;
+        }
+
+        @media (max-width: 600px) {
+            .not-found-container {
+                margin: 2rem;
+                padding: 2rem;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            .search-form input,
+            .search-form button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>404 - Страница не найдена</h1>
-    <p>К сожалению, запрашиваемая страница не существует.</p>
-    <p>Попробуйте вернуться на <a href="/">главную страницу</a>.</p>
-    <p>Или воспользуйтесь поиском:</p>
-    <form action="/search" method="get">
-        <input type="text" name="query" placeholder="Поиск по сайту">
-        <button type="submit">Искать</button>
-    </form>
+    <div class="not-found-container">
+        <h1>404</h1>
+        <p>Страница не найдена</p>
+        <p>К сожалению, запрашиваемая страница не существует.</p>
+        <p>Попробуйте вернуться на <a href="/">главную страницу</a>.</p>
+
+    </div>
+
+    <form id="search-form" action="/search" method="get" style="display: none;"></form>
 </body>
 </html>
